@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOMEM-ARANHA DUELO TEIOSO - TCG HERÓIS</title>
+<style>
+  :root {
+    --bg-dark: #0f172a;
+    --card-bg: #1e293b;
+    --card-border: #e11d48;
+    --gold: #fbbf24;
+    --hp-color: #ef4444;
+    --energia-color: #eab308;
+    --shield-color: #38bdf8;
+    --text: #f8fafc;
+  }
+
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+  }
+
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+
+  #status-bar {
+    background: #090d16;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e11d48;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+
+  .lorde-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: bold;
+  }
+
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.08);
+  }
+
+
+  .hp-text { color: var(--hp-color); }
+  .energia-text { color: var(--energia-color); }
+
+
+  #tabuleiro {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px;
+    background: radial-gradient(circle, #1e1b4b 0%, #090d16 100%);
+    position: relative;
+    gap: 10px;
+  }
+
+
+  .zona-campo {
+    min-height: 190px;
+    border: 2px dashed #334155;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    transition: border-color 0.3s;
+    padding: 10px;
+  }
+
+
+  #historico-log {
+    text-align: center;
+    font-size: 1.05rem;
+    color: var(--gold);
+    min-height: 40px;
+    font-style: italic;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 2px 0;
+  }
+
+
+  #painel-inferior {
+    background: #0f172a;
+    border-top: 2px solid #334155;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+
+  #mao {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    min-height: 180px;
+  }
+
+
+  .carta {
+    width: 125px;
+    height: 175px;
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+
+  .carta:hover {
+    transform: translateY(-8px) scale(1.03);
+    border-color: var(--gold);
+    box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
+  }
+
+
+  .carta.feitico {
+    background: #1e1b4b;
+    border-color: #6366f1;
+  }
+
+
+  .carta.exasto {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+  }
+
+
+  .carta-custo {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #eab308;
+    color: #0f172a;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+
+
+  .carta-img {
+    width: 100%;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+
+  .carta-nome {
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+
+  .carta-desc {
+    font-size: 0.62rem;
+    text-align: center;
+    color: #94a3b8;
+    margin: 2px 0;
+  }
+
+
+  .carta-stats {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 0.68rem;
+    background: rgba(0,0,0,0.5);
+    padding: 3px 4px;
+    border-radius: 6px;
+  }
+
+
+  #btn-passar {
+    background: linear-gradient(135deg, #e11d48, #be123c);
+    color: white;
+    border: 1px solid #f43f5e;
+    padding: 10px 28px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  }
+
+
+  #btn-passar:hover {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    transform: scale(1.05);
+  }
+
+
+  #btn-passar:disabled {
+    background: #334155;
+    border-color: #475569;
+    color: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+
+  .modal-overlay.ativo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+
+  .modal-card {
+    background: #1e293b;
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+    transform: scale(0.8);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+
+  .modal-overlay.ativo .modal-card {
+    transform: scale(1);
+  }
+
+
+  .modal-card h1 {
+    font-size: 2.2rem;
+    color: var(--gold);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 10px rgba(251, 191, 36, 0.5);
+  }
+
+
+  .modal-card p {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-bottom: 25px;
+    line-height: 1.5;
+  }
+
+
+  .modal-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  }
+
+
+  .modal-btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+  }
+</style>
+</head>
+<body>
+
+
+<div id="status-bar">
+  <div class="lorde-info">
+    <span>🐙 DOUTOR OCTOPUS (IA HARD)</span>
+    <span class="badge hp-text">HP: <span id="ia-hp">400</span></span>
+  </div>
+  <div id="turno-txt" style="font-weight: bold; color: var(--gold);">Turno 1</div>
+  <div class="lorde-info">
+    <span>🕷️ HOMEM-ARANHA (Você)</span>
+    <span class="badge hp-text">HP: <span id="jogador-hp">350</span></span>
+    <span class="badge energia-text">Energia: <span id="jogador-energia">5/5</span></span>
+  </div>
+</div>
+
+
+<div id="tabuleiro">
+  <div class="zona-campo" id="campo-ia"></div>
+  <div id="historico-log">Início de jogo! Invoque heróis na arena (máx: 3).</div>
+  <div class="zona-campo" id="campo-jogador"></div>
+</div>
+
+
+<div id="painel-inferior">
+  <div id="mao"></div>
+  <button id="btn-passar" onclick="passarTurno()">Encerrar Turno</button>
+</div>
+
+
+<div class="modal-overlay" id="modal-fim-jogo">
+  <div class="modal-card">
+    <div style="font-size: 4rem; margin-bottom: 10px;">🏆</div>
+    <h1 id="modal-titulo">VITÓRIA GLORIOSA!</h1>
+    <p id="modal-mensagem">Você salvou a cidade e derrotou o Doutor Octopus!</p>
+    <button class="modal-btn" onclick="location.reload()">Jogar Novamente</button>
+  </div>
+</div>
+
+
+<script>
+  const MAX_CAMPO = 3;
+  const JOGADOR_MAX_HP = 350;
+  const IA_MAX_HP = 400;
+  const ENERGIA_MAXIMA = 30;
+  const ENERGIA_INICIAL = 5;
+  const INCREMENTO_ENERGIA = 5;
+
+
+  const BARALHO_JOGADOR = [
+    { nome: "HOMEM-ARANHA", tipo: "Unidade", custo: 1, atk: 15, hp: 35, hpMax: 35, escudo: 10, img: "https://placehold.co/120x80/e11d48/ffffff?text=Spider-Man" },
+    { nome: "MILES MORALES", tipo: "Unidade", custo: 2, atk: 25, hp: 45, hpMax: 45, escudo: 10, img: "https://placehold.co/120x80/0f172a/e11d48?text=Miles" },
+    { nome: "SPIDER-GWEN", tipo: "Unidade", custo: 3, atk: 35, hp: 55, hpMax: 55, escudo: 15, img: "https://placehold.co/120x80/f8fafc/e11d48?text=Gwen" },
+    { nome: "HOMEM-ARANHA 2099", tipo: "Unidade", custo: 4, atk: 45, hp: 65, hpMax: 65, escudo: 20, img: "https://placehold.co/120x80/1e3a8a/ef4444?text=Spider+2099" },
+    { nome: "VENOM HEROICO", tipo: "Unidade", custo: 4, atk: 50, hp: 60, hpMax: 60, escudo: 10, img: "https://placehold.co/120x80/020617/ffffff?text=Venom" },
+    { nome: "ARANHA DE FERRO", tipo: "Unidade", custo: 5, atk: 55, hp: 75, hpMax: 75, escudo: 25, img: "https://placehold.co/120x80/991b1b/fbbf24?text=Iron+Spider" },
+    { nome: "CAPITÃO AMÉRICA", tipo: "Unidade", custo: 5, atk: 40, hp: 90, hpMax: 90, escudo: 30, img: "https://placehold.co/120x80/1d4ed8/ffffff?text=Capitan" },
+    { nome: "PORCO-ARANHA", tipo: "Unidade", custo: 2, atk: 20, hp: 40, hpMax: 40, escudo: 15, img: "https://placehold.co/120x80/f472b6/ffffff?text=Porco-Aranha" },
+    { nome: "ARANHA NOIR", tipo: "Unidade", custo: 3, atk: 40, hp: 45, hpMax: 45, escudo: 5, img: "https://placehold.co/120x80/1f2937/ffffff?text=Aranha+Noir" },
+    { nome: "SILK", tipo: "Unidade", custo: 3, atk: 30, hp: 60, hpMax: 60, escudo: 20, img: "https://placehold.co/120x80/e2e8f0/0f172a?text=Silk" },
+    { nome: "CHANCE DE OURO", tipo: "Feitiço", custo: 2, desc: "+45 HP Cura", efeito: "cura", valor: 45, img: "https://placehold.co/120x80/10b981/ffffff?text=Cura+M%C3%A1xima" },
+    { nome: "IMPACTO DE TEIA", tipo: "Feitiço", custo: 5, desc: "70 Dano Direto", efeito: "dano", valor: 70, img: "https://placehold.co/120x80/6366f1/ffffff?text=Super+Teia" },
+    { nome: "SENTIDO ARANHA", tipo: "Feitiço", custo: 1, desc: "+25 HP Cura", efeito: "cura", valor: 25, img: "https://placehold.co/120x80/16a34a/ffffff?text=Cura" },
+    { nome: "ESCUDO DE ENERGIA", tipo: "Feitiço", custo: 2, desc: "+25 Escudo Herói", efeito: "escudo", valor: 25, img: "https://placehold.co/120x80/0284c7/ffffff?text=Escudo" },
+    { nome: "DISPARO DE TEIA", tipo: "Feitiço", custo: 1, desc: "20 Dano Direto", efeito: "dano", valor: 20, img: "https://placehold.co/120x80/4f46e5/ffffff?text=Teia" },
+    { nome: "GRANADA DE TEIA", tipo: "Feitiço", custo: 3, desc: "40 Dano Direto", efeito: "dano", valor: 40, img: "https://placehold.co/120x80/9333ea/ffffff?text=Granada" },
+    { nome: "SOBRECARGA TEIOSA", tipo: "Feitiço", custo: 4, desc: "55 Dano Direto", efeito: "dano", valor: 55, img: "https://placehold.co/120x80/c084fc/ffffff?text=Sobrecarga" }
+  ];
+
+
+  const BARALHO_IA = [
+    { nome: "CAPANGA OSCORP", tipo: "Unidade", custo: 1, atk: 20, hp: 35, hpMax: 35, escudo: 5, img: "https://placehold.co/120x80/334155/ffffff?text=Capanga" },
+    { nome: "ELECTRO", tipo: "Unidade", custo: 2, atk: 35, hp: 40, hpMax: 40, escudo: 10, img: "https://placehold.co/120x80/eab308/0f172a?text=Electro" },
+    { nome: "LAGARTO", tipo: "Unidade", custo: 3, atk: 40, hp: 60, hpMax: 60, escudo: 10, img: "https://placehold.co/120x80/166534/ffffff?text=Lagarto" },
+    { nome: "RINO", tipo: "Unidade", custo: 3, atk: 35, hp: 75, hpMax: 75, escudo: 30, img: "https://placehold.co/120x80/475569/ffffff?text=Rino" },
+    { nome: "MYSTERIO", tipo: "Unidade", custo: 4, atk: 45, hp: 55, hpMax: 55, escudo: 20, img: "https://placehold.co/120x80/581c87/ffffff?text=Mysterio" },
+    { nome: "DUENDE VERDE", tipo: "Unidade", custo: 4, atk: 55, hp: 65, hpMax: 65, escudo: 15, img: "https://placehold.co/120x80/15803d/ffffff?text=Duende" },
+    { nome: "CARNIFICINA", tipo: "Unidade", custo: 5, atk: 70, hp: 70, hpMax: 70, escudo: 10, img: "https://placehold.co/120x80/991b1b/ffffff?text=Carnificina" },
+    { nome: "DOUTOR OCTOPUS", tipo: "Unidade", custo: 5, atk: 65, hp: 85, hpMax: 85, escudo: 35, img: "https://placehold.co/120x80/1e293b/fbbf24?text=Doc+Ock" },
+    { nome: "KRAVEN O CAÇADOR", tipo: "Unidade", custo: 2, atk: 40, hp: 35, hpMax: 35, escudo: 0, img: "https://placehold.co/120x80/78350f/ffffff?text=Kraven" },
+    { nome: "ESCORPIÃO", tipo: "Unidade", custo: 3, atk: 35, hp: 55, hpMax: 55, escudo: 15, img: "https://placehold.co/120x80/065f46/ffffff?text=Escorpi%C3%A3o" },
+    { nome: "SHOCKER", tipo: "Unidade", custo: 2, atk: 30, hp: 45, hpMax: 45, escudo: 10, img: "https://placehold.co/120x80/d97706/ffffff?text=Shocker" },
+    { nome: "SORO REGENERATIVO", tipo: "Feitiço", custo: 2, desc: "+50 HP Cura", efeito: "cura", valor: 50, img: "https://placehold.co/120x80/047857/ffffff?text=Soro+Cura" },
+    { nome: "RAIO DE PLASMA", tipo: "Feitiço", custo: 5, desc: "75 Dano Direto", efeito: "dano", valor: 75, img: "https://placehold.co/120x80/dc2626/ffffff?text=Raio+Plasma" },
+    { nome: "REPARO MECÂNICO", tipo: "Feitiço", custo: 2, desc: "+30 HP Cura", efeito: "cura", valor: 30, img: "https://placehold.co/120x80/059669/ffffff?text=Reparo" },
+    { nome: "GARRAS TENTÁCULO", tipo: "Feitiço", custo: 1, desc: "25 Dano Direto", efeito: "dano", valor: 25, img: "https://placehold.co/120x80/b91c1c/ffffff?text=Garras" },
+    { nome: "BOMBA ABÓBORA", tipo: "Feitiço", custo: 3, desc: "50 Dano Direto", efeito: "dano", valor: 50, img: "https://placehold.co/120x80/ea580c/ffffff?text=Bomba" }
+  ];
+
+
+  let turno = 1;
+  let meuTurno = true;
+
+
+  const jogador = { hp: JOGADOR_MAX_HP, energiaMax: ENERGIA_INICIAL, energia: ENERGIA_INICIAL, mao: [], campo: [] };
+  const ia = { hp: IA_MAX_HP, energiaMax: ENERGIA_INICIAL, energia: ENERGIA_INICIAL, mao: [], campo: [] };
+
+
+  function aplicarDanoUnidade(unidade, dano) {
+    let danoRestante = dano;
+    if (unidade.escudo > 0) {
+      if (unidade.escudo >= danoRestante) {
+        unidade.escudo -= danoRestante;
+        danoRestante = 0;
+      } else {
+        danoRestante -= unidade.escudo;
+        unidade.escudo = 0;
+      }
+    }
+    if (danoRestante > 0) {
+      unidade.hp -= danoRestante;
+    }
+  }
+
+
+  function iniciarJogo() {
+    for(let i = 0; i < 4; i++) comprarCarta(jogador, BARALHO_JOGADOR);
+    for(let i = 0; i < 5; i++) comprarCarta(ia, BARALHO_IA);
+    atualizarInterface();
+  }
+
+
+  function comprarCarta(p, baralho) {
+    if(p.mao.length < 5) {
+      const c = baralho[Math.floor(Math.random() * baralho.length)];
+      p.mao.push(JSON.parse(JSON.stringify(c)));
+    }
+  }
+
+
+  function jogarCarta(index) {
+    if (!meuTurno) return;
+    const carta = jogador.mao[index];
+
+
+    if (carta.custo > jogador.energia) {
+      setLog("❌ Energia insuficiente para jogar esta carta!");
+      return;
+    }
+
+
+    if (carta.tipo === "Feitiço") {
+      if (carta.efeito === "escudo" && jogador.campo.length === 0) {
+        setLog("⚠️ Você precisa de ao menos um herói no campo para dar Escudo!");
+        return;
+      }
+
+
+      jogador.energia -= carta.custo;
+      jogador.mao.splice(index, 1);
+
+
+      if (carta.efeito === "cura") {
+        jogador.hp = Math.min(JOGADOR_MAX_HP, jogador.hp + carta.valor);
+        setLog(`💚 Você usou ${carta.nome} (+${carta.valor} HP)!`);
+      } else if (carta.efeito === "escudo") {
+        jogador.campo[0].escudo += carta.valor;
+        setLog(`🛡️ +${carta.valor} Escudo concedido a ${jogador.campo[0].nome}!`);
+      } else if (carta.efeito === "dano") {
+        if (ia.campo.length > 0) {
+          aplicarDanoUnidade(ia.campo[0], carta.valor);
+          setLog(`💥 ${carta.nome} causou ${carta.valor} de dano em ${ia.campo[0].nome}!`);
+          if (ia.campo[0].hp <= 0) {
+            setLog(`☠️ ${ia.campo[0].nome} foi destruído!`);
+            ia.campo.splice(0, 1);
+          }
+        } else {
+          ia.hp -= carta.valor;
+          setLog(`💥 ${carta.nome} atingiu o Doutor Octopus diretamente (${carta.valor} dano)!`);
+        }
+      }
+    } else if (carta.tipo === "Unidade") {
+      if (jogador.campo.length >= MAX_CAMPO) {
+        setLog(`⚠️ Limite de ${MAX_CAMPO} unidades no campo atingido!`);
+        return;
+      }
+      jogador.energia -= carta.custo;
+      carta.jaAtacou = false;
+      jogador.campo.push(carta);
+      jogador.mao.splice(index, 1);
+      setLog(`⚔️ Você invocou ${carta.nome} na arena!`);
+    }
+
+
+    checarVitoria();
+    atualizarInterface();
+  }
+
+
+  function atacarComUnidade(idxAtacante) {
+    if (!meuTurno) return;
+    const atacante = jogador.campo[idxAtacante];
+
+
+    if (atacante.jaAtacou) {
+      setLog(`⚠️ ${atacante.nome} já combateu neste turno!`);
+      return;
+    }
+
+
+    if (ia.campo.length > 0) {
+      let alvoIdx = 0;
+      if (ia.campo.length > 1) {
+        const nomesAlvos = ia.campo.map((u, i) => `${i + 1}: ${u.nome}`).join("\n");
+        const escolha = prompt(`Escolha o alvo do ataque (1 a ${ia.campo.length}):\n${nomesAlvos}`);
+        alvoIdx = parseInt(escolha) - 1;
+        if (isNaN(alvoIdx) || alvoIdx < 0 || alvoIdx >= ia.campo.length) alvoIdx = 0;
+      }
+
+
+      const alvo = ia.campo[alvoIdx];
+      aplicarDanoUnidade(alvo, atacante.atk);
+      setLog(`💥 ${atacante.nome} atacou ${alvo.nome} (${atacante.atk} dano)!`);
+
+
+      if (alvo.hp <= 0) {
+        setLog(`☠️ ${alvo.nome} inimigo foi derrotado!`);
+        ia.campo.splice(alvoIdx, 1);
+      }
+    } else {
+      ia.hp -= atacante.atk;
+      setLog(`💥 ${atacante.nome} atacou o DOUTOR OCTOPUS diretamente (${atacante.atk} dano)!`);
+    }
+
+
+    atacante.jaAtacou = true;
+    checarVitoria();
+    atualizarInterface();
+  }
+
+
+  function passarTurno() {
+    if (!meuTurno) return;
+    meuTurno = false;
+    document.getElementById("btn-passar").disabled = true;
+    setLog("Turno do DOUTOR OCTOPUS 🐙...");
+
+
+    setTimeout(turnoIA, 1000);
+  }
+
+
+  function turnoIA() {
+    turno++;
+    ia.energiaMax = Math.min(ENERGIA_MAXIMA, ENERGIA_INICIAL + (turno - 1) * INCREMENTO_ENERGIA);
+    ia.energia = ia.energiaMax;
+    comprarCarta(ia, BARALHO_IA);
+
+
+    const idxFeitico = ia.mao.findIndex(c => c.tipo === "Feitiço" && c.custo <= ia.energia);
+    if (idxFeitico !== -1) {
+      const feitico = ia.mao[idxFeitico];
+      if (feitico.efeito !== "escudo" || ia.campo.length > 0) {
+        ia.energia -= feitico.custo;
+        ia.mao.splice(idxFeitico, 1);
+
+
+        if (feitico.efeito === "cura") {
+          ia.hp = Math.min(IA_MAX_HP, ia.hp + feitico.valor);
+          setLog(`🧪 Doutor Octopus usou ${feitico.nome} (+${feitico.valor} HP)!`);
+        } else if (feitico.efeito === "dano") {
+          if (jogador.campo.length > 0) {
+            let alvoIndex = 0;
+            let menorHP = jogador.campo[0].hp;
+            jogador.campo.forEach((u, i) => {
+              if (u.hp < menorHP) { menorHP = u.hp; alvoIndex = i; }
+            });
+            aplicarDanoUnidade(jogador.campo[alvoIndex], feitico.valor);
+            setLog(`⚡ Doutor Octopus usou ${feitico.nome} em ${jogador.campo[alvoIndex].nome} (${feitico.valor} dano)!`);
+            if (jogador.campo[alvoIndex].hp <= 0) jogador.campo.splice(alvoIndex, 1);
+          } else {
+            jogador.hp -= feitico.valor;
+            setLog(`⚡ Doutor Octopus usou ${feitico.nome} diretamente em você (${feitico.valor} dano)!`);
+          }
+        }
+      }
+    }
+
+
+    while (ia.campo.length < MAX_CAMPO) {
+      const escolhasInvocacao = ia.mao
+        .map((c, idx) => ({ carta: c, idx }))
+        .filter(item => item.carta.tipo === "Unidade" && item.carta.custo <= ia.energia)
+        .sort((a, b) => b.carta.custo - a.carta.custo);
+
+
+      if (escolhasInvocacao.length === 0) break;
+
+
+      const escolhida = escolhasInvocacao[0];
+      ia.energia -= escolhida.carta.custo;
+      ia.campo.push(escolhida.carta);
+      ia.mao.splice(escolhida.idx, 1);
+      setLog(`🐙 Doutor Octopus invocou ${escolhida.carta.nome}!`);
+    }
+
+
+    ia.campo.forEach(unidadeIA => {
+      if (jogador.campo.length > 0) {
+        let alvoIndex = 0;
+        let menorVida = jogador.campo[0].hp + jogador.campo[0].escudo;
+        jogador.campo.forEach((u, i) => {
+          if ((u.hp + u.escudo) < menorVida) {
+            menorVida = u.hp + u.escudo;
+            alvoIndex = i;
+          }
+        });
+
+
+        const alvo = jogador.campo[alvoIndex];
+       
+        if (unidadeIA.atk <= alvo.escudo && jogador.hp > 0) {
+          jogador.hp -= unidadeIA.atk;
+          setLog(`💥 ${unidadeIA.nome} ignorou seu escudo e te atacou diretamente (${unidadeIA.atk} dano)!`);
+        } else {
+          aplicarDanoUnidade(alvo, unidadeIA.atk);
+          setLog(`💥 ${unidadeIA.nome} atacou ${alvo.nome} (${unidadeIA.atk} dano)!`);
+          if (alvo.hp <= 0) {
+            setLog(`☠️ Seu ${alvo.nome} foi destruído!`);
+            jogador.campo.splice(alvoIndex, 1);
+          }
+        }
+      } else {
+        jogador.hp -= unidadeIA.atk;
+        setLog(`💥 ${unidadeIA.nome} te atacou diretamente (${unidadeIA.atk} dano)!`);
+      }
+    });
+
+
+    checarVitoria();
+
+
+    jogador.energiaMax = Math.min(ENERGIA_MAXIMA, ENERGIA_INICIAL + (turno - 1) * INCREMENTO_ENERGIA);
+    jogador.energia = jogador.energiaMax;
+    jogador.campo.forEach(u => u.jaAtacou = false);
+    comprarCarta(jogador, BARALHO_JOGADOR);
+
+
+    meuTurno = true;
+    document.getElementById("btn-passar").disabled = false;
+    atualizarInterface();
+  }
+
+
+  function checarVitoria() {
+    if (ia.hp <= 0) {
+      setTimeout(() => exibeTelaFimJogo(true), 300);
+    } else if (jogador.hp <= 0) {
+      setTimeout(() => exibeTelaFimJogo(false), 300);
+    }
+  }
+
+
+  function exibeTelaFimJogo(vitoria) {
+    const modal = document.getElementById("modal-fim-jogo");
+    const titulo = document.getElementById("modal-titulo");
+    const mensagem = document.getElementById("modal-mensagem");
+
+
+    if (vitoria) {
+      titulo.innerText = "VITÓRIA GLORIOSA!";
+      titulo.style.color = "#fbbf24";
+      mensagem.innerText = "Você superou a inteligência do Doutor Octopus e salvou Nova York!";
+    } else {
+      titulo.innerText = "DERROTA!";
+      titulo.style.color = "#ef4444";
+      mensagem.innerText = "O Doutor Octopus dominou a cidade...";
+    }
+
+
+    modal.classList.add("ativo");
+  }
+
+
+  function setLog(texto) {
+    document.getElementById("historico-log").innerText = texto;
+  }
+
+
+  function atualizarInterface() {
+    document.getElementById("jogador-hp").innerText = Math.max(0, jogador.hp);
+    document.getElementById("jogador-energia").innerText = `${jogador.energia}/${jogador.energiaMax}`;
+    document.getElementById("ia-hp").innerText = Math.max(0, ia.hp);
+    document.getElementById("turno-txt").innerText = `Turno ${turno}`;
+
+
+    const divMao = document.getElementById("mao");
+    divMao.innerHTML = "";
+    jogador.mao.forEach((carta, i) => {
+      divMao.appendChild(criarElementoCarta(carta, () => jogarCarta(i)));
+    });
+
+
+    const campoJ = document.getElementById("campo-jogador");
+    campoJ.innerHTML = "";
+    jogador.campo.forEach((carta, i) => {
+      const el = criarElementoCarta(carta, () => atacarComUnidade(i));
+      if (carta.jaAtacou) el.classList.add("exasto");
+      campoJ.appendChild(el);
+    });
+
+
+    const campoIA = document.getElementById("campo-ia");
+    campoIA.innerHTML = "";
+    ia.campo.forEach(carta => {
+      campoIA.appendChild(criarElementoCarta(carta, null));
+    });
+  }
+
+
+  function criarElementoCarta(carta, onClick) {
+    const el = document.createElement("div");
+    el.className = `carta ${carta.tipo === 'Feitiço' ? 'feitico' : ''}`;
+    if (onClick) el.onclick = onClick;
+
+
+    el.innerHTML = `
+      <div class="carta-custo">${carta.custo}</div>
+      <img class="carta-img" src="${carta.img}" alt="${carta.nome}">
+      <div class="carta-nome">${carta.nome}</div>
+      <div class="carta-desc">${carta.desc || ''}</div>
+      ${carta.tipo === 'Unidade' ? `
+        <div class="carta-stats">
+          <span style="color:#ef4444">⚔️ ${carta.atk}</span>
+          <span style="color:#38bdf8">🛡️ ${carta.escudo || 0}</span>
+          <span style="color:#22c55e">❤️ ${carta.hp}</span>
+        </div>
+      ` : ''}
+    `;
+    return el;
+  }
+
+
+  iniciarJogo();
+</script>
+</body>
+</html>
+
